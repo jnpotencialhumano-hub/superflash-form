@@ -1,0 +1,15 @@
+{
+  "name": "SUPERFLASH TV",
+  "short_name": "Superflash",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "200x200",
+      "type": "image/jpeg"
+    }
+  ]
+}
