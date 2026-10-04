@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Administración - SUPERFLASH TV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 flex items-center justify-center min-h-screen p-4 font-sans">
+    <div class="bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-lg border border-slate-700">
+        
+        <!-- Encabezado -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-white tracking-wide">SUPERFLASH TV</h1>
+            <p id="subtitulo-form" class="text-slate-400 text-sm mt-1">Gestión de activaciones y paneles</p>
+        </div>
+
+        <!-- Formulario Principal -->
+        <form id="superflash-form" class="space-y-5">
+            
+            <!-- SECCIÓN 1: SI ENTRA CON TOKEN (PANEL DE REVENDEDOR) -->
+            <div id="seccion-token" class="hidden space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                <div class="bg-blue-500/10 text-blue-400 text-xs p-3 rounded-lg border border-blue-500/20">
+                    ✨ Token verificado. Estás a un paso de crear tu panel de distribuidor.
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Correo Electrónico</label>
+                    <input type="email" id="email-panel" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="correo@ejemplo.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Nombre de Usuario del Panel</label>
+                    <input type="text" id="usuario-panel" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="ej. revendedor123">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Contraseña de Ingreso</label>
+                    <input type="password" id="password-panel" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="••••••••">
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: FLUJO NORMAL (DEMOS Y CUENTAS DE CLIENTES) -->
+            <div id="seccion-normal" class="space-y-4">
+                <!-- Acción -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Qué acción deseas realizar hoy?</label>
+                    <select id="accion" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                        <option value="demo">🆓 Generar Demo</option>
+                        <option value="pago">💰 Activar / Renovar Cuenta Paga</option>
+                    </select>
+                </div>
+
+                <!-- Teléfono -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Número de WhatsApp del Cliente</label>
+                    <input type="text" id="telefono" required class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="+573105516416">
+                </div>
+
+                <!-- Samsung o LG -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Dispositivo Samsung o LG?</label>
+                    <select id="samsung_lg" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                        <option value="No">No</option>
+                        <option value="Si">Sí</option>
+                    </select>
+                </div>
+
+                <!-- Qué App (Condicional si es Samsung/LG) -->
+                <div id="grupo-app" class="hidden">
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Qué App vas a usar?</label>
+                    <select id="app" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                        <option value="Ibocast">Ibocast</option>
+                        <option value="Duplecast">Duplecast</option>
+                    </select>
+                </div>
+
+                <!-- Usuario Existente -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Usuario existente?</label>
+                    <select id="usuario_existente" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                        <option value="No">No (Crear nuevo)</option>
+                        <option value="Si">Sí (Extender)</option>
+                    </select>
+                </div>
+
+                <!-- Usuario IPTV (Condicional si es existente) -->
+                <div id="grupo-usuario" class="hidden">
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Usuario IPTV Actual</label>
+                    <input type="text" id="usuario_iptv" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="ej. user12345">
+                </div>
+
+                <!-- Dispositivos y Meses (Solo para cuentas pagas) -->
+                <div id="grupo-pago" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Cantidad de Dispositivos</label>
+                        <select id="dispositivos" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                            <option value="1 dispositivo">1 dispositivo</option>
+                            <option value="2 dispositivos">2 dispositivos</option>
+                            <option value="3 dispositivos">3 dispositivos</option>
+                            <option value="5 dispositivos">5 dispositivos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Meses a activar</label>
+                        <select id="meses" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                            <option value="1 mes">1 mes</option>
+                            <option value="3 meses">3 meses</option>
+                            <option value="6 meses">6 meses</option>
+                            <option value="12 meses">12 meses</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Archivo / QR -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Adjunta el QR o Imagen de ingreso</label>
+                    <input type="file" id="imagen" accept="image/*" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-slate-300 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                </div>
+            </div>
+
+            <!-- Botón de Enviar -->
+            <button type="submit" id="btn-enviar" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all mt-6">
+                Procesar Solicitud 🚀
+            </button>
+        </form>
+
+        <!-- Mensaje de Estado -->
+        <div id="mensaje-estado" class="hidden mt-4 text-center text-sm p-3 rounded-xl"></div>
+    </div>
+
+    <script>
+        // Lógica de interfaz dinámica
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        if (token) {
+            document.getElementById('seccion-token').classList.remove('hidden');
+            document.getElementById('seccion-normal').classList.add('hidden');
+            document.getElementById('subtitulo-form').innerText = "Registro de Panel de Revendedor";
+        }
+
+        const accionSelect = document.getElementById('accion');
+        const grupoPago = document.getElementById('grupo-pago');
+        const samsungSelect = document.getElementById('samsung_lg');
+        const grupoApp = document.getElementById('grupo-app');
+        const usuarioExistenteSelect = document.getElementById('usuario_existente');
+        const grupoUsuario = document.getElementById('grupo-usuario');
+
+        accionSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'pago') {
+                grupoPago.classList.remove('hidden');
+            } else {
+                grupoPago.classList.add('hidden');
+            }
+        });
+
+        samsungSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'Si') {
+                grupoApp.classList.remove('hidden');
+            } else {
+                grupoApp.classList.add('hidden');
+            }
+        });
+
+        usuarioExistenteSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'Si') {
+                grupoUsuario.classList.remove('hidden');
+            } else {
+                grupoUsuario.classList.add('hidden');
+            }
+        });
+
+        // Envío de datos al Webhook de n8n
+        document.getElementById('superflash-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-enviar');
+            const estadoDiv = document.getElementById('mensaje-estado');
+            
+            btn.disabled = true;
+            btn.innerText = "Procesando...";
+            estadoDiv.classList.add('hidden');
+
+            try {
+                let payload = {};
+
+                if (token) {
+                    // Si es panel con token
+                    payload = {
+                        token: token,
+                        tipo: "panel_revendedor",
+                        email: document.getElementById('email-panel').value,
+                        usuario_panel: document.getElementById('usuario-panel').value,
+                        password_panel: document.getElementById('password-panel').value
+                    };
+                } else {
+                    // Si es Demo o Cuenta Paga normal (simulando estructura Tally)
+                    payload = {
+                        accion: accionSelect.value,
+                        telefono_usuario: document.getElementById('telefono').value,
+                        samsung_lg: samsungSelect.value,
+                        app: samsungSelect.value === 'Si' ? document.getElementById('app').value : null,
+                        usuario_existente: usuarioExistenteSelect.value,
+                        usuario_iptv: usuarioExistenteSelect.value === 'Si' ? document.getElementById('usuario_iptv').value : null,
+                        dispositivos: accionSelect.value === 'pago' ? document.getElementById('dispositivos').value : null,
+                        meses: accionSelect.value === 'pago' ? document.getElementById('meses').value : null,
+                    };
+                    
+                    // Manejo de imagen opcional
+                    const fileInput = document.getElementById('imagen');
+                    if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const base64 = await toBase64(file);
+                        payload.imagen_base64 = base64;
+                        payload.imagen_nombre = file.name;
+                    }
+                }
+
+                // URL de tu Webhook en n8n (puedes ajustar la URL según corresponda)
+                const webhookUrl = token 
+                    ? 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/activar-panel-token' 
+                    : 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/panel-superflash';
+
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    estadoDiv.innerText = "¡Solicitud procesada con éxito! Revisa tu WhatsApp.";
+                    estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30";
+                    estadoDiv.classList.remove('hidden');
+                    document.getElementById('superflash-form').reset();
+                } else {
+                    throw new Error('Error en el servidor');
+                }
+            } catch (err) {
+                estadoDiv.innerText = "Hubo un error al procesar. Inténtalo de nuevo.";
+                estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30";
+                estadoDiv.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Procesar Solicitud 🚀";
+            }
+        });
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    </script>
+</body>
+</html>
