@@ -9,8 +9,9 @@
 <body class="bg-slate-900 text-slate-100 flex items-center justify-center min-h-screen p-4 font-sans">
     <div class="bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-lg border border-slate-700">
         
-        <!-- Encabezado -->
-        <div class="text-center mb-6">
+        <!-- Encabezado con Logo -->
+        <div class="text-center mb-6 flex flex-col items-center">
+            <img src="logo.jpg" alt="Logo Superflash TV" class="w-20 h-20 rounded-2xl shadow-md mb-3 border border-slate-600 object-cover">
             <h1 class="text-2xl font-bold text-white tracking-wide">SUPERFLASH TV</h1>
             <p id="subtitulo-form" class="text-slate-400 text-sm mt-1">Gestión de activaciones y paneles</p>
         </div>
@@ -63,8 +64,8 @@
                     </select>
                 </div>
 
-                <!-- Qué App (Condicional: Solo aparece si es Samsung o LG, para Demo o Pago) -->
-                <div id="grupo-app" class="hidden">
+                <!-- Qué App (Siempre visible tanto en Demo como en Pago si se selecciona) -->
+                <div id="grupo-app">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Qué App vas a usar?</label>
                     <select id="app" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
                         <option value="Ibocast">Ibocast</option>
@@ -72,8 +73,8 @@
                     </select>
                 </div>
 
-                <!-- Usuario Existente -->
-                <div>
+                <!-- Usuario Existente (Oculto si es Demo, visible si es Pago) -->
+                <div id="grupo-usuario-existente">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Usuario existente?</label>
                     <select id="usuario_existente" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
                         <option value="No">No (Crear nuevo)</option>
@@ -81,7 +82,7 @@
                     </select>
                 </div>
 
-                <!-- Usuario IPTV (Condicional si es existente) -->
+                <!-- Usuario IPTV Actual (Condicional si es existente) -->
                 <div id="grupo-usuario" class="hidden">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Usuario IPTV Actual</label>
                     <input type="text" id="usuario_iptv" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="ej. user12345">
@@ -95,7 +96,7 @@
                             <option value="1 dispositivo">1 dispositivo</option>
                             <option value="2 dispositivos">2 dispositivos</option>
                             <option value="3 dispositivos">3 dispositivos</option>
-                            <option value="5 dispositivos">5 dispositivos</option>
+                            <option value="5 dispositivos">5 dispositivos (Solo 1 mes)</option>
                         </select>
                     </div>
                     <div>
@@ -127,7 +128,6 @@
     </div>
 
     <script>
-        // Lógica de interfaz dinámica
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
 
@@ -140,26 +140,43 @@
         const accionSelect = document.getElementById('accion');
         const grupoPago = document.getElementById('grupo-pago');
         const samsungSelect = document.getElementById('samsung_lg');
-        const grupoApp = document.getElementById('grupo-app');
         const grupoImagen = document.getElementById('grupo-imagen');
+        const grupoUsuarioExistente = document.getElementById('grupo-usuario-existente');
         const usuarioExistenteSelect = document.getElementById('usuario_existente');
         const grupoUsuario = document.getElementById('grupo-usuario');
+        const dispositivosSelect = document.getElementById('dispositivos');
+        const mesesSelect = document.getElementById('meses');
 
+        // Control de campos según la acción (Demo o Pago)
         accionSelect.addEventListener('change', (e) => {
             if (e.target.value === 'pago') {
                 grupoPago.classList.remove('hidden');
+                grupoUsuarioExistente.classList.remove('hidden');
             } else {
                 grupoPago.classList.add('hidden');
+                grupoUsuarioExistente.classList.add('hidden');
+                grupoUsuario.classList.add('hidden');
+                usuarioExistenteSelect.value = 'No';
             }
         });
 
-        // Mostrar u ocultar App y QR dinámicamente si es Samsung o LG
+        // Restricción de 5 dispositivos -> Solo 1 mes permitido
+        dispositivosSelect.addEventListener('change', (e) => {
+            if (e.target.value === '5 dispositivos') {
+                mesesSelect.value = '1 mes';
+                mesesSelect.disabled = true;
+                mesesSelect.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                mesesSelect.disabled = false;
+                mesesSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        // Mostrar u ocultar QR si es Samsung o LG
         samsungSelect.addEventListener('change', (e) => {
             if (e.target.value === 'Si') {
-                grupoApp.classList.remove('hidden');
                 grupoImagen.classList.remove('hidden');
             } else {
-                grupoApp.classList.add('hidden');
                 grupoImagen.classList.add('hidden');
             }
         });
@@ -198,11 +215,11 @@
                         accion: accionSelect.value,
                         telefono_usuario: document.getElementById('telefono').value,
                         samsung_lg: samsungSelect.value,
-                        app: samsungSelect.value === 'Si' ? document.getElementById('app').value : null,
-                        usuario_existente: usuarioExistenteSelect.value,
-                        usuario_iptv: usuarioExistenteSelect.value === 'Si' ? document.getElementById('usuario_iptv').value : null,
-                        dispositivos: accionSelect.value === 'pago' ? document.getElementById('dispositivos').value : null,
-                        meses: accionSelect.value === 'pago' ? document.getElementById('meses').value : null,
+                        app: document.getElementById('app').value,
+                        usuario_existente: accionSelect.value === 'pago' ? usuarioExistenteSelect.value : 'No',
+                        usuario_iptv: (accionSelect.value === 'pago' && usuarioExistenteSelect.value === 'Si') ? document.getElementById('usuario_iptv').value : null,
+                        dispositivos: accionSelect.value === 'pago' ? dispositivosSelect.value : null,
+                        meses: accionSelect.value === 'pago' ? mesesSelect.value : null,
                     };
                     
                     const fileInput = document.getElementById('imagen');
@@ -229,8 +246,9 @@
                     estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30";
                     estadoDiv.classList.remove('hidden');
                     document.getElementById('superflash-form').reset();
-                    grupoApp.classList.add('hidden');
                     grupoImagen.classList.add('hidden');
+                    mesesSelect.disabled = false;
+                    mesesSelect.classList.remove('opacity-50', 'cursor-not-allowed');
                 } else {
                     throw new Error('Error en el servidor');
                 }
