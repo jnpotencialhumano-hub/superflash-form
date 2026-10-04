@@ -63,7 +63,7 @@
                     </select>
                 </div>
 
-                <!-- Qué App (Condicional si es Samsung/LG) -->
+                <!-- Qué App (Condicional: Solo aparece si es Samsung o LG, para Demo o Pago) -->
                 <div id="grupo-app" class="hidden">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Qué App vas a usar?</label>
                     <select id="app" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
@@ -109,8 +109,8 @@
                     </div>
                 </div>
 
-                <!-- Archivo / QR -->
-                <div>
+                <!-- Archivo / QR (Condicional: Solo aparece si es Samsung o LG) -->
+                <div id="grupo-imagen" class="hidden">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Adjunta el QR o Imagen de ingreso</label>
                     <input type="file" id="imagen" accept="image/*" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-slate-300 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
                 </div>
@@ -141,6 +141,7 @@
         const grupoPago = document.getElementById('grupo-pago');
         const samsungSelect = document.getElementById('samsung_lg');
         const grupoApp = document.getElementById('grupo-app');
+        const grupoImagen = document.getElementById('grupo-imagen');
         const usuarioExistenteSelect = document.getElementById('usuario_existente');
         const grupoUsuario = document.getElementById('grupo-usuario');
 
@@ -152,11 +153,14 @@
             }
         });
 
+        // Mostrar u ocultar App y QR dinámicamente si es Samsung o LG
         samsungSelect.addEventListener('change', (e) => {
             if (e.target.value === 'Si') {
                 grupoApp.classList.remove('hidden');
+                grupoImagen.classList.remove('hidden');
             } else {
                 grupoApp.classList.add('hidden');
+                grupoImagen.classList.add('hidden');
             }
         });
 
@@ -182,7 +186,6 @@
                 let payload = {};
 
                 if (token) {
-                    // Si es panel con token
                     payload = {
                         token: token,
                         tipo: "panel_revendedor",
@@ -191,7 +194,6 @@
                         password_panel: document.getElementById('password-panel').value
                     };
                 } else {
-                    // Si es Demo o Cuenta Paga normal (simulando estructura Tally)
                     payload = {
                         accion: accionSelect.value,
                         telefono_usuario: document.getElementById('telefono').value,
@@ -203,9 +205,8 @@
                         meses: accionSelect.value === 'pago' ? document.getElementById('meses').value : null,
                     };
                     
-                    // Manejo de imagen opcional
                     const fileInput = document.getElementById('imagen');
-                    if (fileInput.files.length > 0) {
+                    if (samsungSelect.value === 'Si' && fileInput.files.length > 0) {
                         const file = fileInput.files[0];
                         const base64 = await toBase64(file);
                         payload.imagen_base64 = base64;
@@ -213,7 +214,6 @@
                     }
                 }
 
-                // URL de tu Webhook en n8n (puedes ajustar la URL según corresponda)
                 const webhookUrl = token 
                     ? 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/activar-panel-token' 
                     : 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/panel-superflash';
@@ -229,6 +229,8 @@
                     estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30";
                     estadoDiv.classList.remove('hidden');
                     document.getElementById('superflash-form').reset();
+                    grupoApp.classList.add('hidden');
+                    grupoImagen.classList.add('hidden');
                 } else {
                     throw new Error('Error en el servidor');
                 }
