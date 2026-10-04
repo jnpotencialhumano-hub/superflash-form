@@ -64,8 +64,8 @@
                     </select>
                 </div>
 
-                <!-- Qué App (Siempre visible tanto en Demo como en Pago si se selecciona) -->
-                <div id="grupo-app">
+                <!-- Qué App (Oculto por defecto, solo se muestra si Samsung o LG es Sí) -->
+                <div id="grupo-app" class="hidden">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Qué App vas a usar?</label>
                     <select id="app" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
                         <option value="Ibocast">Ibocast</option>
@@ -73,8 +73,8 @@
                     </select>
                 </div>
 
-                <!-- Usuario Existente (Oculto si es Demo, visible si es Pago) -->
-                <div id="grupo-usuario-existente">
+                <!-- Usuario Existente (Oculto en Demo, visible en Pago) -->
+                <div id="grupo-usuario-existente" class="hidden">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Usuario existente?</label>
                     <select id="usuario_existente" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
                         <option value="No">No (Crear nuevo)</option>
@@ -82,7 +82,7 @@
                     </select>
                 </div>
 
-                <!-- Usuario IPTV Actual (Condicional si es existente) -->
+                <!-- Usuario IPTV Actual (Condicional si es existente en Pago) -->
                 <div id="grupo-usuario" class="hidden">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Usuario IPTV Actual</label>
                     <input type="text" id="usuario_iptv" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="ej. user12345">
@@ -110,7 +110,7 @@
                     </div>
                 </div>
 
-                <!-- Archivo / QR (Condicional: Solo aparece si es Samsung o LG) -->
+                <!-- Archivo / QR (Condicional: Solo aparece si es Samsung o LG es Sí) -->
                 <div id="grupo-imagen" class="hidden">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Adjunta el QR o Imagen de ingreso</label>
                     <input type="file" id="imagen" accept="image/*" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-slate-300 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
@@ -140,6 +140,7 @@
         const accionSelect = document.getElementById('accion');
         const grupoPago = document.getElementById('grupo-pago');
         const samsungSelect = document.getElementById('samsung_lg');
+        const grupoApp = document.getElementById('grupo-app');
         const grupoImagen = document.getElementById('grupo-imagen');
         const grupoUsuarioExistente = document.getElementById('grupo-usuario-existente');
         const usuarioExistenteSelect = document.getElementById('usuario_existente');
@@ -147,9 +148,13 @@
         const dispositivosSelect = document.getElementById('dispositivos');
         const mesesSelect = document.getElementById('meses');
 
-        // Control de campos según la acción (Demo o Pago)
-        accionSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'pago') {
+        // Función centralizada para actualizar la visibilidad de los campos de forma dinámica
+        function actualizarVisibilidad() {
+            const esPago = accionSelect.value === 'pago';
+            const esSamsungLg = samsungSelect.value === 'Si';
+
+            // 1. Control de Pago vs Demo
+            if (esPago) {
                 grupoPago.classList.remove('hidden');
                 grupoUsuarioExistente.classList.remove('hidden');
             } else {
@@ -158,7 +163,28 @@
                 grupoUsuario.classList.add('hidden');
                 usuarioExistenteSelect.value = 'No';
             }
-        });
+
+            // 2. Control de App e Imagen (Solo si es Samsung o LG)
+            if (esSamsungLg) {
+                grupoApp.classList.remove('hidden');
+                grupoImagen.classList.remove('hidden');
+            } else {
+                grupoApp.classList.add('hidden');
+                grupoImagen.classList.add('hidden');
+            }
+
+            // 3. Control de usuario IPTV actual
+            if (esPago && usuarioExistenteSelect.value === 'Si') {
+                grupoUsuario.classList.remove('hidden');
+            } else {
+                grupoUsuario.classList.add('hidden');
+            }
+        }
+
+        // Eventos para refrescar la interfaz al cambiar selecciones
+        accionSelect.addEventListener('change', actualizarVisibilidad);
+        samsungSelect.addEventListener('change', actualizarVisibilidad);
+        usuarioExistenteSelect.addEventListener('change', actualizarVisibilidad);
 
         // Restricción de 5 dispositivos -> Solo 1 mes permitido
         dispositivosSelect.addEventListener('change', (e) => {
@@ -172,22 +198,8 @@
             }
         });
 
-        // Mostrar u ocultar QR si es Samsung o LG
-        samsungSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'Si') {
-                grupoImagen.classList.remove('hidden');
-            } else {
-                grupoImagen.classList.add('hidden');
-            }
-        });
-
-        usuarioExistenteSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'Si') {
-                grupoUsuario.classList.remove('hidden');
-            } else {
-                grupoUsuario.classList.add('hidden');
-            }
-        });
+        // Ejecutar al cargar la página para aplicar estado inicial
+        actualizarVisibilidad();
 
         // Envío de datos al Webhook de n8n
         document.getElementById('superflash-form').addEventListener('submit', async (e) => {
@@ -215,7 +227,7 @@
                         accion: accionSelect.value,
                         telefono_usuario: document.getElementById('telefono').value,
                         samsung_lg: samsungSelect.value,
-                        app: document.getElementById('app').value,
+                        app: samsungSelect.value === 'Si' ? document.getElementById('app').value : null,
                         usuario_existente: accionSelect.value === 'pago' ? usuarioExistenteSelect.value : 'No',
                         usuario_iptv: (accionSelect.value === 'pago' && usuarioExistenteSelect.value === 'Si') ? document.getElementById('usuario_iptv').value : null,
                         dispositivos: accionSelect.value === 'pago' ? dispositivosSelect.value : null,
@@ -246,7 +258,7 @@
                     estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30";
                     estadoDiv.classList.remove('hidden');
                     document.getElementById('superflash-form').reset();
-                    grupoImagen.classList.add('hidden');
+                    actualizarVisibilidad();
                     mesesSelect.disabled = false;
                     mesesSelect.classList.remove('opacity-50', 'cursor-not-allowed');
                 } else {
