@@ -23,7 +23,7 @@
             <p id="subtitulo-form" class="text-slate-400 text-sm mt-1">Gestión de activaciones y paneles</p>
         </div>
 
-        <!-- Formulario Principal (con novalidate para evitar bloqueos por campos ocultos) -->
+        <!-- Formulario Principal -->
         <form id="superflash-form" novalidate class="space-y-5">
             
             <!-- SECCIÓN 1: SI ENTRA CON TOKEN (PANEL DE REVENDEDOR) -->
@@ -131,7 +131,7 @@
         </form>
 
         <!-- Mensaje de Estado -->
-        <div id="mensaje-estado" class="hidden mt-4 text-center text-sm p-3 rounded-xl"></div>
+        <div id="mensaje-estado" class="hidden mt-4 text-center text-sm p-4 rounded-xl"></div>
     </div>
 
     <script>
@@ -203,12 +203,13 @@
 
         document.getElementById('superflash-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const form = document.getElementById('superflash-form');
             const btn = document.getElementById('btn-enviar');
             const estadoDiv = document.getElementById('mensaje-estado');
             
             estadoDiv.classList.add('hidden');
 
-            // Validación controlada por JS
+            // 1. Validación de campos obligatorios
             if (token) {
                 const email = document.getElementById('email-panel').value.trim();
                 const usuario = document.getElementById('usuario-panel').value.trim();
@@ -229,9 +230,21 @@
                 }
             }
 
+            // 2. RESPUESTA INMEDIATA: Deshabilitar el botón y mostrar mensaje claro
             btn.disabled = true;
-            btn.innerText = "Procesando...";
+            btn.innerText = "✅ Solicitud recibida";
+            btn.className = "w-full bg-slate-700 text-slate-400 font-bold py-3.5 px-4 rounded-xl shadow-inner mt-6 cursor-not-allowed";
 
+            // Deshabilitar inputs para evitar dobles clics
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => input.disabled = true);
+
+            // Mostrar el mensaje amigable de forma instantánea
+            estadoDiv.innerHTML = "⏳ <b>¡Estamos procesando tu solicitud!</b><br><br>En aproximadamente <b>1 minuto</b> recibirás un mensaje en tu WhatsApp con todos los accesos listos.<br><br><span class='text-xs text-slate-400'>Ya puedes cerrar esta ventana con total tranquilidad.</span>";
+            estadoDiv.className = "mt-4 text-center text-sm p-4 rounded-xl bg-blue-500/10 text-blue-300 border border-blue-500/30";
+            estadoDiv.classList.remove('hidden');
+
+            // 3. Preparación de datos y envío en segundo plano
             try {
                 let payload = {};
 
@@ -319,33 +332,16 @@
                     ? 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/activar-panel-token' 
                     : 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/panel-superflash';
 
-                const response = await fetch(webhookUrl, {
+                // Disparo con keepalive para garantizar entrega incluso si cierran la pestaña
+                fetch(webhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                    body: JSON.stringify(payload),
+                    keepalive: true
+                }).catch(err => console.error("Error en segundo plano:", err));
 
-                const dataRes = await response.json().catch(() => ({}));
-
-                if (response.ok && dataRes.success !== false) {
-                    estadoDiv.innerText = "¡Solicitud procesada con éxito! Revisa tu WhatsApp.";
-                    estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30";
-                    estadoDiv.classList.remove('hidden');
-                    document.getElementById('superflash-form').reset();
-                    actualizarVisibilidad();
-                    mesesSelect.disabled = false;
-                    mesesSelect.classList.remove('opacity-50', 'cursor-not-allowed');
-                } else {
-                    const mensajeError = dataRes.mensaje || 'Error al procesar la solicitud.';
-                    throw new Error(mensajeError);
-                }
             } catch (err) {
-                estadoDiv.innerText = err.message || "Hubo un error al procesar. Inténtalo de nuevo.";
-                estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30";
-                estadoDiv.classList.remove('hidden');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Procesar Solicitud 🚀";
+                console.error("Error al preparar datos:", err);
             }
         });
 
