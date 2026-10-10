@@ -230,21 +230,9 @@
                 }
             }
 
-            // 2. RESPUESTA INMEDIATA: Deshabilitar el botón y mostrar mensaje claro
             btn.disabled = true;
-            btn.innerText = "✅ Solicitud recibida";
-            btn.className = "w-full bg-slate-700 text-slate-400 font-bold py-3.5 px-4 rounded-xl shadow-inner mt-6 cursor-not-allowed";
+            btn.innerText = "Enviando datos... ⏳";
 
-            // Deshabilitar inputs para evitar dobles clics
-            const inputs = form.querySelectorAll('input, select');
-            inputs.forEach(input => input.disabled = true);
-
-            // Mostrar el mensaje amigable de forma instantánea
-            estadoDiv.innerHTML = "⏳ <b>¡Estamos procesando tu solicitud!</b><br><br>En aproximadamente <b>1 minuto</b> recibirás un mensaje en tu WhatsApp con todos los accesos listos.<br><br><span class='text-xs text-slate-400'>Ya puedes cerrar esta ventana con total tranquilidad.</span>";
-            estadoDiv.className = "mt-4 text-center text-sm p-4 rounded-xl bg-blue-500/10 text-blue-300 border border-blue-500/30";
-            estadoDiv.classList.remove('hidden');
-
-            // 3. Preparación de datos y envío en segundo plano
             try {
                 let payload = {};
 
@@ -308,8 +296,8 @@
                         fileData = [{
                             "name": file.name,
                             "url": base64,
-                            "mimeType": file.type,
-                            "size": file.size
+                            "mimeType": "image/jpeg",
+                            "size": base64.length
                         }];
                     }
 
@@ -332,23 +320,53 @@
                     ? 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/activar-panel-token' 
                     : 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/panel-superflash';
 
-                // Disparo con keepalive para garantizar entrega incluso si cierran la pestaña
-                fetch(webhookUrl, {
+                const res = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                    keepalive: true
-                }).catch(err => console.error("Error en segundo plano:", err));
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    throw new Error("El servidor devolvió un error (Código: " + res.status + ")");
+                }
+
+                const inputs = form.querySelectorAll('input, select');
+                inputs.forEach(input => input.disabled = true);
+                btn.innerText = "✅ Solicitud recibida";
+                btn.className = "w-full bg-slate-700 text-slate-400 font-bold py-3.5 px-4 rounded-xl shadow-inner mt-6 cursor-not-allowed";
+
+                estadoDiv.innerHTML = "⏳ <b>¡Estamos procesando tu solicitud!</b><br><br>En aproximadamente <b>1 minuto</b> recibirás un mensaje en tu WhatsApp con todos los accesos listos.<br><br><span class='text-xs text-slate-400'>Ya puedes cerrar esta ventana con total tranquilidad.</span>";
+                estadoDiv.className = "mt-4 text-center text-sm p-4 rounded-xl bg-blue-500/10 text-blue-300 border border-blue-500/30";
+                estadoDiv.classList.remove('hidden');
 
             } catch (err) {
-                console.error("Error al preparar datos:", err);
+                console.error("Error al enviar solicitud:", err);
+                estadoDiv.innerText = err.message || "Hubo un error al procesar. Inténtalo de nuevo.";
+                estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30";
+                estadoDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerText = "Procesar Solicitud 🚀";
             }
         });
 
         const toBase64 = file => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1200;
+                    const scaleSize = img.width > MAX_WIDTH ? (MAX_WIDTH / img.width) : 1;
+                    canvas.width = img.width * scaleSize;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.onerror = error => reject(error);
+            };
             reader.onerror = error => reject(error);
         });
     </script>
