@@ -75,6 +75,7 @@
                 <div id="grupo-app" class="hidden">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Qué App vas a usar?</label>
                     <select id="app" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                        <option value="Smartone">Smartone</option>
                         <option value="Ibocast">Ibocast</option>
                         <option value="Duplecast">Duplecast</option>
                     </select>
@@ -215,17 +216,27 @@
                 const usuario = document.getElementById('usuario-panel').value.trim();
                 const password = document.getElementById('password-panel').value.trim();
                 if (!email || !usuario || !password) {
-                    estadoDiv.innerText = "Por favor completa todos los campos del panel.";
-                    estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30";
-                    estadoDiv.classList.remove('hidden');
+                    mostrarError("Por favor completa todos los campos del panel.");
                     return;
                 }
             } else {
                 const tel = document.getElementById('telefono').value.trim();
                 if (!tel) {
-                    estadoDiv.innerText = "Por favor ingresa el número de WhatsApp.";
-                    estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30";
-                    estadoDiv.classList.remove('hidden');
+                    mostrarError("Por favor ingresa el número de WhatsApp.");
+                    return;
+                }
+
+                if (usuarioExistenteSelect.value === 'Si' && accionSelect.value === 'pago') {
+                    const uIptv = document.getElementById('usuario_iptv').value.trim();
+                    if (!uIptv) {
+                        mostrarError("Por favor indica el usuario IPTV actual.");
+                        return;
+                    }
+                }
+
+                const fileInput = document.getElementById('imagen');
+                if (samsungSelect.value === 'Si' && fileInput.files.length === 0) {
+                    mostrarError("Por favor adjunta la foto o captura del código QR.");
                     return;
                 }
             }
@@ -274,7 +285,7 @@
                         {
                             "key": "question_8pYxGk",
                             "label": "Usuario IPTV",
-                            "value": usuarioExistenteSelect.value === 'Si' ? document.getElementById('usuario_iptv').value.trim() : null
+                            "value": (accionSelect.value === 'pago' && usuarioExistenteSelect.value === 'Si') ? document.getElementById('usuario_iptv').value.trim() : null
                         },
                         {
                             "key": "question_0jYOLP",
@@ -316,9 +327,10 @@
                     };
                 }
 
+                // Webhook con la instancia asignada
                 const webhookUrl = token 
                     ? 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/activar-panel-token' 
-                    : 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/panel-superflash';
+                    : 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/panel-superflash?instancia=573203962798';
 
                 const res = await fetch(webhookUrl, {
                     method: 'POST',
@@ -341,13 +353,18 @@
 
             } catch (err) {
                 console.error("Error al enviar solicitud:", err);
-                estadoDiv.innerText = err.message || "Hubo un error al procesar. Inténtalo de nuevo.";
-                estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30";
-                estadoDiv.classList.remove('hidden');
+                mostrarError(err.message || "Hubo un error al procesar. Inténtalo de nuevo.");
                 btn.disabled = false;
                 btn.innerText = "Procesar Solicitud 🚀";
             }
         });
+
+        function mostrarError(mensaje) {
+            const estadoDiv = document.getElementById('mensaje-estado');
+            estadoDiv.innerText = mensaje;
+            estadoDiv.className = "mt-4 text-center text-sm p-3 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30";
+            estadoDiv.classList.remove('hidden');
+        }
 
         const toBase64 = file => new Promise((resolve, reject) => {
             const reader = new FileReader();
