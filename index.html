@@ -26,10 +26,10 @@
         <!-- Formulario Principal -->
         <form id="superflash-form" novalidate class="space-y-5">
             
-            <!-- SECCIÓN 1: SI ENTRA CON TOKEN (PANEL DE REVENDEDOR) -->
+            <!-- SECCIÓN 1: SI ENTRA CON TOKEN (PANEL DE REVENDEDOR AUTOSERVICIO) -->
             <div id="seccion-token" class="hidden space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700">
                 <div class="bg-blue-500/10 text-blue-400 text-xs p-3 rounded-lg border border-blue-500/20">
-                    ✨ Token verificado. Estás a un paso de crear tu panel de distribuidor.
+                    ✨ Token verificado. Estás a un paso de crear o recargar tu panel de distribuidor.
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Correo Electrónico</label>
@@ -45,7 +45,7 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN 2: FLUJO NORMAL (DEMOS Y CUENTAS DE CLIENTES) -->
+            <!-- SECCIÓN 2: FLUJO ADMINISTRADOR (DEMOS, CUENTAS Y PANELES MANUALES) -->
             <div id="seccion-normal" class="space-y-4">
                 <!-- Acción -->
                 <div>
@@ -53,17 +53,41 @@
                     <select id="accion" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
                         <option value="demo">🆓 Generar Demo</option>
                         <option value="pago">💰 Activar / Renovar Cuenta Paga</option>
+                        <option value="panel">🏢 Crear / Recargar Panel Revendedor</option>
                     </select>
                 </div>
 
                 <!-- Teléfono -->
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Número de WhatsApp del Cliente</label>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Número de WhatsApp del Cliente / Revendedor</label>
                     <input type="text" id="telefono" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="+573105516416">
                 </div>
 
-                <!-- Samsung o LG -->
-                <div>
+                <!-- GRUPO NUEVO: PANEL REVENDEDOR MANUAL -->
+                <div id="grupo-panel-manual" class="hidden space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                    <div class="bg-amber-500/10 text-amber-300 text-xs p-3 rounded-lg border border-amber-500/20">
+                        🏢 Si el usuario ya existe en el panel, se le sumarán los créditos automáticamente.
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Cantidad de Créditos a Cargar</label>
+                        <input type="number" id="creditos-panel-manual" min="1" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="ej. 25">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Correo Electrónico</label>
+                        <input type="email" id="email-panel-manual" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="correo@ejemplo.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Usuario del Panel</label>
+                        <input type="text" id="usuario-panel-manual" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="ej. revendedor123">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Contraseña del Panel</label>
+                        <input type="text" id="password-panel-manual" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" placeholder="Contraseña de acceso">
+                    </div>
+                </div>
+
+                <!-- Samsung o LG (Solo para Demos y Cuentas) -->
+                <div id="grupo-samsung-lg">
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">¿Dispositivo Samsung o LG?</label>
                     <select id="samsung_lg" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
                         <option value="No">No</option>
@@ -138,6 +162,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
+        const instanciaActiva = urlParams.get('instancia') || '573203962798';
 
         if (token) {
             document.getElementById('seccion-token').classList.remove('hidden');
@@ -146,6 +171,8 @@
         }
 
         const accionSelect = document.getElementById('accion');
+        const grupoPanelManual = document.getElementById('grupo-panel-manual');
+        const grupoSamsungLg = document.getElementById('grupo-samsung-lg');
         const grupoPago = document.getElementById('grupo-pago');
         const samsungSelect = document.getElementById('samsung_lg');
         const grupoApp = document.getElementById('grupo-app');
@@ -157,8 +184,24 @@
         const mesesSelect = document.getElementById('meses');
 
         function actualizarVisibilidad() {
-            const esPago = accionSelect.value === 'pago';
+            const accion = accionSelect.value;
+            const esPanel = accion === 'panel';
+            const esPago = accion === 'pago';
             const esSamsungLg = samsungSelect.value === 'Si';
+
+            if (esPanel) {
+                grupoPanelManual.classList.remove('hidden');
+                grupoSamsungLg.classList.add('hidden');
+                grupoPago.classList.add('hidden');
+                grupoUsuarioExistente.classList.add('hidden');
+                grupoUsuario.classList.add('hidden');
+                grupoApp.classList.add('hidden');
+                grupoImagen.classList.add('hidden');
+                return;
+            } else {
+                grupoPanelManual.classList.add('hidden');
+                grupoSamsungLg.classList.remove('hidden');
+            }
 
             if (esPago) {
                 grupoPago.classList.remove('hidden');
@@ -209,6 +252,7 @@
             const estadoDiv = document.getElementById('mensaje-estado');
             
             estadoDiv.classList.add('hidden');
+            const esPanelManual = !token && accionSelect.value === 'panel';
 
             // 1. Validación de campos obligatorios
             if (token) {
@@ -217,6 +261,17 @@
                 const password = document.getElementById('password-panel').value.trim();
                 if (!email || !usuario || !password) {
                     mostrarError("Por favor completa todos los campos del panel.");
+                    return;
+                }
+            } else if (esPanelManual) {
+                const tel = document.getElementById('telefono').value.trim();
+                const creditos = document.getElementById('creditos-panel-manual').value.trim();
+                const email = document.getElementById('email-panel-manual').value.trim();
+                const usuario = document.getElementById('usuario-panel-manual').value.trim();
+                const password = document.getElementById('password-panel-manual').value.trim();
+
+                if (!tel || !creditos || !email || !usuario || !password) {
+                    mostrarError("Por favor completa el teléfono, créditos, correo, usuario y contraseña del panel.");
                     return;
                 }
             } else {
@@ -242,12 +297,14 @@
             }
 
             btn.disabled = true;
-            btn.innerText = "Enviando datos... ⏳";
+            btn.innerText = "Procesando solicitud... ⏳";
 
             try {
                 let payload = {};
+                let webhookUrl = '';
 
                 if (token) {
+                    webhookUrl = 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/activar-panel-token';
                     payload = {
                         token: token,
                         tipo: "panel_revendedor",
@@ -255,7 +312,20 @@
                         usuario_panel: document.getElementById('usuario-panel').value.trim(),
                         password_panel: document.getElementById('password-panel').value.trim()
                     };
+                } else if (esPanelManual) {
+                    webhookUrl = 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/activar-panel-token';
+                    payload = {
+                        modo_manual: true,
+                        tipo: "panel_revendedor",
+                        telefono: document.getElementById('telefono').value.trim(),
+                        creditos: document.getElementById('creditos-panel-manual').value.trim(),
+                        email: document.getElementById('email-panel-manual').value.trim(),
+                        usuario_panel: document.getElementById('usuario-panel-manual').value.trim(),
+                        password_panel: document.getElementById('password-panel-manual').value.trim(),
+                        telefono_instancia_vinculada: instanciaActiva
+                    };
                 } else {
+                    webhookUrl = `https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/panel-superflash?instancia=${encodeURIComponent(instanciaActiva)}`;
                     const fields = [
                         {
                             "key": "question_yqbYx6",
@@ -327,11 +397,6 @@
                     };
                 }
 
-                // Webhook con la instancia asignada
-                const webhookUrl = token 
-                    ? 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/activar-panel-token' 
-                    : 'https://jnwebpro-n8n.5ddkar.easypanel.host/webhook/panel-superflash?instancia=573203962798';
-
                 const res = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -342,13 +407,45 @@
                     throw new Error("El servidor devolvió un error (Código: " + res.status + ")");
                 }
 
+                let data = {};
+                try {
+                    data = await res.json();
+                } catch (errJson) {}
+
+                // Validar si n8n devolvió error lógico (ej. token expirado o usado)
+                if (data.success === false) {
+                    mostrarError(data.mensaje || "No se pudo procesar la solicitud.");
+                    btn.disabled = false;
+                    btn.innerText = "Procesar Solicitud 🚀";
+                    return;
+                }
+
                 const inputs = form.querySelectorAll('input, select');
                 inputs.forEach(input => input.disabled = true);
-                btn.innerText = "✅ Solicitud recibida";
+                btn.innerText = "✅ Solicitud completada";
                 btn.className = "w-full bg-slate-700 text-slate-400 font-bold py-3.5 px-4 rounded-xl shadow-inner mt-6 cursor-not-allowed";
 
-                estadoDiv.innerHTML = "⏳ <b>¡Estamos procesando tu solicitud!</b><br><br>En aproximadamente <b>1 minuto</b> recibirás un mensaje en tu WhatsApp con todos los accesos listos.<br><br><span class='text-xs text-slate-400'>Ya puedes cerrar esta ventana con total tranquilidad.</span>";
-                estadoDiv.className = "mt-4 text-center text-sm p-4 rounded-xl bg-blue-500/10 text-blue-300 border border-blue-500/30";
+                // Si es creación/recarga de panel y n8n devolvió las credenciales, las mostramos en pantalla
+                if ((token || esPanelManual) && data.usuario) {
+                    estadoDiv.innerHTML = `
+                        <div class="text-left space-y-2">
+                            <div class="text-center font-bold text-emerald-400 text-base mb-2">✅ ${data.mensaje || '¡Panel activado con éxito!'}</div>
+                            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-700 space-y-1.5 text-xs">
+                                <p><span class="text-slate-400">👤 Usuario:</span> <strong class="text-white select-all">${data.usuario}</strong></p>
+                                <p><span class="text-slate-400">🔑 Contraseña:</span> <strong class="text-white select-all">${data.password}</strong></p>
+                                <p><span class="text-slate-400">💸 Créditos cargados:</span> <strong class="text-emerald-400">${data.creditos}</strong></p>
+                                <p class="pt-1"><span class="text-slate-400">🔗 Enlace de acceso:</span><br>
+                                <a href="${data.url_panel}" target="_blank" class="text-blue-400 underline break-all">${data.url_panel}</a></p>
+                            </div>
+                            <p class="text-center text-xs text-slate-400 pt-2">También hemos enviado estos datos al WhatsApp registrado.</p>
+                        </div>
+                    `;
+                    estadoDiv.className = "mt-4 text-sm p-4 rounded-xl bg-emerald-500/10 text-emerald-200 border border-emerald-500/30";
+                } else {
+                    estadoDiv.innerHTML = "⏳ <b>¡Estamos procesando tu solicitud!</b><br><br>En aproximadamente <b>1 minuto</b> recibirás un mensaje en tu WhatsApp con todos los accesos listos.<br><br><span class='text-xs text-slate-400'>Ya puedes cerrar esta ventana con total tranquilidad.</span>";
+                    estadoDiv.className = "mt-4 text-center text-sm p-4 rounded-xl bg-blue-500/10 text-blue-300 border border-blue-500/30";
+                }
+
                 estadoDiv.classList.remove('hidden');
 
             } catch (err) {
